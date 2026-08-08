@@ -69,3 +69,78 @@ document.querySelectorAll('a[href^="#"]').forEach((link) => {
     }
   });
 });
+
+const toastContainer = document.createElement('div');
+toastContainer.className = 'toast-container';
+document.body.appendChild(toastContainer);
+
+function showToast(message, type = 'info') {
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  
+  if (type === 'warning') {
+    toast.style.borderLeftColor = 'var(--danger)';
+  } else if (type === 'success') {
+    toast.style.borderLeftColor = 'var(--accent-2)';
+  }
+
+  const icon = type === 'warning' ? '⚠' : type === 'success' ? '✓' : 'ℹ';
+  toast.innerHTML = `
+    <span class="toast-icon" style="color: ${type === 'warning' ? 'var(--danger)' : type === 'success' ? 'var(--accent-2)' : 'var(--accent)'}">${icon}</span>
+    <span class="toast-msg">${message}</span>
+  `;
+
+  toastContainer.appendChild(toast);
+  toast.offsetHeight;
+  toast.classList.add('show');
+
+  setTimeout(() => {
+    toast.classList.remove('show');
+    toast.addEventListener('transitionend', () => toast.remove());
+  }, 4000);
+}
+
+document.querySelectorAll('a').forEach((link) => {
+  const href = link.getAttribute('href');
+
+  if (href === '#') {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      showToast('A demonstração deste projeto estará disponível em breve!', 'info');
+    });
+  }
+  
+  else if (href === 'https://github.com/' || href === 'https://www.linkedin.com/') {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (link.classList.contains('contact-link')) {
+        showToast('Este link de rede social não foi configurado ainda.', 'warning');
+      } else {
+        showToast('O repositório deste projeto ainda não foi configurado.', 'warning');
+      }
+    });
+  }
+
+  else if (href && href.endsWith('.pdf')) {
+    link.addEventListener('click', async (e) => {
+      e.preventDefault();
+      showToast('Verificando disponibilidade do currículo...', 'info');
+      try {
+        const response = await fetch(href, { method: 'HEAD' });
+        if (response.ok) {
+          const tempLink = document.createElement('a');
+          tempLink.href = href;
+          tempLink.download = '';
+          document.body.appendChild(tempLink);
+          tempLink.click();
+          document.body.removeChild(tempLink);
+          showToast('Download do currículo iniciado!', 'success');
+        } else {
+          showToast('Arquivo de currículo não encontrado na pasta assets.', 'warning');
+        }
+      } catch (err) {
+        showToast('Não foi possível baixar o currículo no momento.', 'warning');
+      }
+    });
+  }
+});
